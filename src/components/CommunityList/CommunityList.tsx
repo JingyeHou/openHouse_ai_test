@@ -1,47 +1,26 @@
 import React from 'react'
 import CommunityUnit, {CommunityUnitType} from '../CommunityUnit/CommunityUnit'
-import { List, Image} from 'antd'
-
-
-
+import { List } from 'antd'
 export type CommunityListType = {
-  list: Array<CommunityUnitType> | undefined
+  list: Array<CommunityUnitType> | undefined,
+  loading: boolean
 }
+const renderItem = (item: CommunityUnitType, index: number) => <CommunityUnit {...item} key={index}/>
 
 const CommunityList = ({
-  list
+  list,
+  loading
 }: CommunityListType) => {
-  console.log(list);
   return (
     <List
-    itemLayout="vertical"
-    size="large"
-    pagination={{
-      onChange: page => {
-        console.log(page);
-      },
-      pageSize: 3,
-    }}
-    dataSource={list}
-    renderItem={item => (
-      <List.Item
-        key={item.name}
-        extra={
-          <Image
-            width={272}
-            alt="logo"
-            src={item.url}
-            fallback='/default-image.png'
-          />
-        }
-        >
-          <List.Item.Meta
-            title={item.name}
-            description={`Area: ${item.group}`}
-          />
-          {`Average Price: $${item.price}`}
-        </List.Item>
-      )}
+      itemLayout="vertical"
+      size="large"
+      pagination={{
+        pageSize: 3,
+      }}
+      dataSource={list}
+      loading={loading}
+      renderItem={renderItem}
     />
   )
 }

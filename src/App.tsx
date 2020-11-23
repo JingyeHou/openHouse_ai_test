@@ -1,13 +1,14 @@
-import React, {useState, useEffect} from 'react';
-import {CalgaryMap, CommunityList} from './components'
-import {Col, Row} from 'antd'
 import './App.css';
 import 'antd/dist/antd.css';
-import axios from "axios";
+import React, {useState, useEffect} from 'react';
+import {CalgaryMap, CommunityList, CustomHeader} from './components'
+import {Col, Row, Divider, notification} from 'antd'
+import {fetchURL, api, getAverage} from './utils'
+import {CommunityUnitType} from './components/CommunityUnit/CommunityUnit'
+
+
 import styled from 'styled-components'
 
-const communityUrl = 'https://a18fda49-215e-47d1-9dc6-c6136a04a33a.mock.pstmn.io/communities'
-const homeUrl = 'https://a18fda49-215e-47d1-9dc6-c6136a04a33a.mock.pstmn.io/homes'
 
 export type CommunityType = {
   id: string,
@@ -24,16 +25,9 @@ export type HomeData = {
   type: string,
 }
 
-export type CommunityUnitType = {
-  name: string,
-  url: string,
-  price: number,
-}
-
-const fetchURL = (url: string) => axios.get(url);
-
-const getData = (setCommunities: (community: any) => void) => {
-  const promiseArray = [communityUrl, homeUrl].map(fetchURL)
+const getData = (setCommunities: (community: any) => void, setLoading: (loading: boolean) => void) => {
+  const promiseArray = [api.communityUrl, api.homeUrl].map(fetchURL)
+  setLoading(true)
   Promise.all(promiseArray)
     .then((res) => {
       const {data: resData} = res[0]
@@ -45,7 +39,7 @@ const getData = (setCommunities: (community: any) => void) => {
         } = community
         const {data: homeData} = res[1]
         const priceArr = homeData.filter((home: HomeData) => home.communityId === community.id).map((home: HomeData) => home.price)
-        const price: number = Math.floor(priceArr.reduce((a: number, b: number) => a + b, 0) / (priceArr.length ? priceArr.length : 1))
+        const price: number = Math.floor(getAverage(priceArr))
         return {
           name,
           url,
@@ -60,35 +54,41 @@ const getData = (setCommunities: (community: any) => void) => {
       setCommunities(map)
     })
   .catch(error => {
-    console.log(error)
-    throw error
-  })
+    notification['error']({
+      message: 'Network Error',
+      description: error.message,
+    });
+  }).finally(() => setLoading(false))
 }
 
 const Container = styled.div`
-   background-color: white
+   background-color: white;
 `
-
 
 function App() {
   const [communities, setCommunities] = useState(new Map())
+  const [loading, setLoading] = useState(false)
   const [area, setArea] = useState('South West')
   useEffect(() => {
-    getData(setCommunities)
+    getData(setCommunities, setLoading)
   }, [])
   const onClick = (name: string) => setArea(name);
   return (
     <div className="App">
-          <Row align="middle">
-            <Col xs={24} sm={24} md={12} lg={10} >
-              <CalgaryMap onClick={onClick}/>
-            </Col>
-            <Col xs={24} sm={24} md={12} lg={14} >
-              <Container>
-                <CommunityList list={communities.get(area) || []} /> 
-              </Container>
-            </Col>
-          </Row>
+      <CustomHeader />
+      <Row align='middle'>
+        <Col xs={24} sm={24} md={8} lg={10}>
+          <CalgaryMap onClick={onClick}/>
+        </Col>
+        <Col xs={0} sm={0} md={1} lg={1} style={{ height: '300px'}} >
+          <Divider type="vertical" style={{ height: "100%" }} />
+        </Col>
+        <Col xs={24} sm={24} md={15} lg={13}>
+          <Container>
+            <CommunityList list={communities.get(area) || []} loading={loading} /> 
+          </Container>
+        </Col>
+      </Row>
     </div>
   );
 }
