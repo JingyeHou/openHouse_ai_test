@@ -1,2 +1,8 @@
 import {CalgaryMap} from './CalgaryMap'
-export {CalgaryMap} 
+import {CommunityList} from './CommunityList'
+import {CommunityUnit} from './CommunityUnit'
+export {
+  CalgaryMap,
+  CommunityList,
+  CommunityUnit
+} 
